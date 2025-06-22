@@ -1,2 +1,3 @@
 # maritse.github.io
-The blog
+
+simple blog
