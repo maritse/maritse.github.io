@@ -3,7 +3,7 @@ title: Malicious aspect of cargo build scripts
 description: Cargo build scripts can be easily leveraged to perform supply chain attack
 date: 2025-02-10
 draft: false
-tags: [rust malware]
+tags: [rust, malware]
 ---
 
 ## Cargo build scripts
