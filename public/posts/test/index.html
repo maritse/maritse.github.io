@@ -1,0 +1,162 @@
+<!DOCTYPE html>
+<html><head lang="en"><script src="/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=livereload" data-no-instant defer></script>
+	<meta charset="utf-8" />
+	<meta http-equiv="X-UA-Compatible" content="IE=edge"><title>Malicious aspect of cargo build scripts - maritse blog</title><meta name="viewport" content="width=device-width, initial-scale=1">
+	<meta name="description" content="Cargo build scripts can be easily leveraged to perform supply chain attack" />
+	<meta property="og:image" content=""/>
+	<meta property="og:url" content="http://localhost:1313/posts/test/">
+  <meta property="og:site_name" content="maritse blog">
+  <meta property="og:title" content="Malicious aspect of cargo build scripts">
+  <meta property="og:description" content="Cargo build scripts can be easily leveraged to perform supply chain attack">
+  <meta property="og:locale" content="en_us">
+  <meta property="og:type" content="article">
+    <meta property="article:section" content="posts">
+    <meta property="article:published_time" content="2025-02-10T00:00:00+00:00">
+    <meta property="article:modified_time" content="2025-02-10T00:00:00+00:00">
+    <meta property="article:tag" content="Rust Malware">
+
+  <meta name="twitter:card" content="summary">
+  <meta name="twitter:title" content="Malicious aspect of cargo build scripts">
+  <meta name="twitter:description" content="Cargo build scripts can be easily leveraged to perform supply chain attack">
+
+        <link href="http://localhost:1313/css/fonts.2c2227b81b1970a03e760aa2e6121cd01f87c88586803cbb282aa224720a765f.css" rel="stylesheet">
+	
+
+	
+	<link rel="stylesheet" type="text/css" media="screen" href="http://localhost:1313/css/main.6a0f23ea50fd34b46fee262a5a68e17d458c51a2bc99ba1ba018065de6b180c3.css" />
+		<link id="darkModeStyle" rel="stylesheet" type="text/css" href="http://localhost:1313/css/dark.50b57e12d401420df23965fed157368aba37b76df0ecefd0b1ecd4da664f01a0.css"  disabled /><script type="text/javascript"
+		src="http://localhost:1313/js/MathJax.js"></script>
+		
+		<script type="text/x-mathjax-config">
+		MathJax.Hub.Config({
+			tex2jax: {
+				inlineMath: [['$','$'], ['\\(','\\)']],
+				displayMath: [['$$','$$'], ['\[','\]']],
+				processEscapes: true,
+				processEnvironments: true,
+				skipTags: ['script', 'noscript', 'style', 'textarea', 'pre'],
+				TeX: { equationNumbers: { autoNumber: "AMS" },
+						 extensions: ["AMSmath.js", "AMSsymbols.js"] }
+			}
+		});
+		</script><link rel="stylesheet" href="http://localhost:1313/katex/katex.min.css ">
+		<script defer src="http://localhost:1313/katex/katex.min.js"></script>
+		<script defer src="http://localhost:1313/katex/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+		
+		<script>
+			document.addEventListener("DOMContentLoaded", function() {
+					renderMathInElement(document.body, {
+							delimiters: [
+									{left: "$$", right: "$$", display: true},
+									{left: "$", right: "$", display: false}
+							]
+					});
+			});
+		</script>
+</head>
+<body>
+        <div class="content"><header>
+	<div class="main">
+		<a href="http://localhost:1313/">maritse blog</a>
+	</div>
+	<nav>
+		
+		<a href="/">Home</a>
+		
+		<a href="/posts">All posts</a>
+		
+		<a href="/about">About</a>
+		
+		<a href="/tags">Tags</a>
+		
+		| <span id="dark-mode-toggle" onclick="toggleTheme()"><svg class="feather">
+   <use href="/svg/feather-sprite.51cf5647cb1987f769b616558f2620fd9423d72058490231b391bf6aa3744b55.svg#sun" />
+</svg></span>
+		<script src="http://localhost:1313/js/themetoggle.js"></script>
+		
+	</nav>
+</header>
+
+<main>
+  <article>
+    <div class="post-container">
+      
+      <div class="post-content">
+        <div class="title">
+          <h1 class="title">Malicious aspect of cargo build scripts</h1>
+          <div class="meta">Posted on Feb 10, 2025</div>
+        </div>
+        
+        <section class="body">
+          <h2 id="cargo-build-scripts">Cargo build scripts</h2>
+<p>I first learned about Cargo build scripts at a local Rust meetup. There, a presenter demonstrated how they can automate various tasks. It quickly became clear how easy it is to insert a malicious build.rs into a single dependency, especially when a project has hundreds of them.</p>
+<h4 id="whats-are-the-cargo-build-scripts">Whats are the cargo build scripts?</h4>
+<p>It&rsquo;s a Rust code that is compiled and executed when the package or main code is built. It&rsquo;s that simple. Build scripts can be used for various reasons. For example, they can execute pre-building scripts that adjust the build. These scripts can perform platform-specific configurations needed for the build or one of its components.</p>
+<p>The cargo documentation provides a simple example of build script code.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-gdscript3" data-lang="gdscript3"><span style="display:flex;"><span><span style="color:#f92672">//</span> build<span style="color:#f92672">.</span>rs
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>use std::env;
+</span></span><span style="display:flex;"><span>use std::fs;
+</span></span><span style="display:flex;"><span>use std::path::<span style="color:#a6e22e">Path</span>;
+</span></span><span style="display:flex;"><span>
+</span></span><span style="display:flex;"><span>fn main() {
+</span></span><span style="display:flex;"><span>    let out_dir <span style="color:#f92672">=</span> env::var_os(<span style="color:#e6db74">&#34;OUT_DIR&#34;</span>)<span style="color:#f92672">.</span>unwrap();
+</span></span><span style="display:flex;"><span>    let dest_path <span style="color:#f92672">=</span> <span style="color:#a6e22e">Path</span>::new(<span style="color:#f92672">&amp;</span>out_dir)<span style="color:#f92672">.</span>join(<span style="color:#e6db74">&#34;hello.rs&#34;</span>);
+</span></span><span style="display:flex;"><span>    fs::write(
+</span></span><span style="display:flex;"><span>        <span style="color:#f92672">&amp;</span>dest_path,
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;pub fn message() -&gt; &amp;&#39;static str {</span>
+</span></span><span style="display:flex;"><span>            \<span style="color:#e6db74">&#34;Hello, World!</span><span style="color:#ae81ff">\&#34;</span>
+</span></span><span style="display:flex;"><span>        }
+</span></span><span style="display:flex;"><span>        <span style="color:#e6db74">&#34;</span>
+</span></span><span style="display:flex;"><span>    )<span style="color:#f92672">.</span>unwrap();
+</span></span><span style="display:flex;"><span>    println<span style="color:#f92672">!</span>(<span style="color:#e6db74">&#34;cargo::rerun-if-changed=build.rs&#34;</span>);
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>This code reads an environment variable and creates a new text file in a new directory. Additionally, the cargo format is used to print information to stdout. Thus, the code above is a simple example of the impact on the operating system; the file is created with content.</p>
+<p>Scripts have a wide range of capabilities, such as operating files (also outside the OUT_DIR scope) and network operations.</p>
+<p>In the cargo documentation we can also see a line, so by default nothing will appear in our cargo stdout logs.</p>
+<div class="highlight"><pre tabindex="0" style="color:#f8f8f2;background-color:#272822;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-fallback" data-lang="fallback"><span style="display:flex;"><span>The output of the script is hidden from the terminal during normal compilation
+</span></span></code></pre></div><p>it makes easier to not to draw attention of our executed code.</p>
+<h4 id="so-whats-the-risk">So whats the risk?</h4>
+<p>It is reasonable to assume that not all included libraries have been thoroughly analyzed for security vulnerabilities in projects. Sometimes, only the number of CVEs submitted for a certain version are checked. For example, dependency check is the only way to prove that the code is not vulnerable; however, it still has the potential to include malicious code.</p>
+<p>Currently, there is talk about sandboxing those executions (<a href="https://github.com/rust-lang/cargo/issues/5720)">https://github.com/rust-lang/cargo/issues/5720)</a>. In my opinion, it is the only direct way to increase security and reduce potential risks. This issue is still open on GitHub, and there are no pre-production implementations ready at the time of writing this article.</p>
+<h4 id="what-is-the-potential-workaround-now">What is the potential workaround now?</h4>
+<p>One solution would probably be to keep as much as possible in VMs. All of the code that I develop is coded, tested, and executed in virtual machines. This rule has another advantage: you keep your host clean, with no dependency issues or risk of malicious code. Not everything can be done in VMs, but most things can.</p>
+<p>But what if you&rsquo;re developing huge code for a large-scale product? An interesting idea is short-lived instances in your infrastructure inspired by the AWS Spot Instances concept. These instances would only have one task: to perform a job and then terminate. This decreases the level of persistence of potential malware, for example. It&rsquo;s not a perfect solution, but it could be quite effective.</p>
+
+        </section>
+        <div class="post-tags">
+          
+          
+          <nav class="nav tags">
+            <ul class="tags">
+              
+              <li><a href="/tags/rust-malware">rust malware</a></li>
+              
+            </ul>
+          </nav>
+          
+          
+        </div>
+      </div>
+
+      
+      
+    </div>
+
+    </article>
+</main>
+<footer>
+  <div style="display:flex"><a class="soc" href="https://github.com/maritse" rel="me" title="GitHub"><svg class="feather">
+   <use href="/svg/feather-sprite.51cf5647cb1987f769b616558f2620fd9423d72058490231b391bf6aa3744b55.svg#github" />
+</svg></a><a class="border"></a><a class="soc" href="https://x.com/marits_e" rel="me" title="Twitter"><svg class="feather">
+   <use href="/svg/feather-sprite.51cf5647cb1987f769b616558f2620fd9423d72058490231b391bf6aa3744b55.svg#twitter" />
+</svg></a><a class="border"></a></div>
+  <div class="footer-info">
+    2025  © maritse |  <a
+      href="https://github.com/athul/archie">Archie Theme</a> | Built with <a href="https://gohugo.io">Hugo</a>
+  </div>
+</footer>
+
+</div>
+    </body>
+</html>
