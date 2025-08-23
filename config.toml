@@ -21,6 +21,11 @@ pygmentscodefencesguesssyntax = true
 	mathjax = true # enable MathJax support
 	katex = true # enable KaTeX support
 
+# google ad
+[services]
+  [services.googleAnalytics]
+    id = 'G-F756H1S2W5'
+
 # Social Tags
 
 [[params.social]]
