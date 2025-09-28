@@ -19,6 +19,8 @@ Articles:
 - [Blog section](https://maritse.github.io/posts/)
 - [Security Mechanisms vs Application Logic: Conclusions from Mobile Application Penetration Tests](https://www.securitum.com/security_mechanisms_vs_application_logic.html)
 - [Using Malicious Discord Apps to Access User Data Through OAuth Permissions Grants](https://www.securitum.com/using_malicious_discod_apps_to_access_user_data.html)
+- [Proton VPN’s No-Log policy verification](https://drive.proton.me/urls/NA0V1AX7QR#2LxqkF786aPy)
 
 Talks:
 - Preventing supply chain attacks using blockchain - MSHP 2023. Cracow, Poland
+- Rootkits using eBPF - MSHP 2025. Cracow, Poland 
