@@ -46,7 +46,7 @@ it makes easier to not to draw attention of our executed code.
 #### So whats the risk?
 It is reasonable to assume that not all included libraries have been thoroughly analyzed for security vulnerabilities in projects. Sometimes, only the number of CVEs submitted for a certain version are checked. For example, dependency check is the only way to prove that the code is not vulnerable; however, it still has the potential to include malicious code.
 
-Currently, there is talk about sandboxing those executions (https://github.com/rust-lang/cargo/issues/5720). In my opinion, it is the only direct way to increase security and reduce potential risks. This issue is still open on GitHub, and there are no pre-production implementations ready at the time of writing this article.
+Currently, there is talk about sandboxing those executions (https://github.com/rust-lang/cargo/issues/5720\). In my opinion, it is the only direct way to increase security and reduce potential risks. This issue is still open on GitHub, and there are no pre-production implementations ready at the time of writing this article.
 #### What is the potential workaround now?
 One solution would probably be to keep as much as possible in VMs. All of the code that I develop is coded, tested, and executed in virtual machines. This rule has another advantage: you keep your host clean, with no dependency issues or risk of malicious code. Not everything can be done in VMs, but most things can.
 
